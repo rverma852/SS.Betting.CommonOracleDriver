@@ -55,4 +55,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy /Y "$(SolutionDir)\ThirdParty\OracleDB\*.dll" "$(TargetDir)"</PostBuildEvent>
+  </PropertyGroup>
 </Project>

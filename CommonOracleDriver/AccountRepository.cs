@@ -10,40 +10,45 @@ namespace CommonOracleDriver
     {
         public void PrintAccountDetails(string accountId)
         {
-            OracleConnection connection = null;
             OracleCommand command = null;
             OracleDataReader reader = null;
 
-            try
+            using (var connection = new OracleConnection(ConfigurationManager.AppSettings["OracleConnectionString"]))
             {
-                connection = new OracleConnection(ConfigurationManager.AppSettings["OracleConnectionString"]);
-                command = new OracleCommand
+                try
                 {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = "accounts_api.get_account_details",
-                    Connection = connection,
-                    BindByName = true
+                    connection.Open();
 
-                };
-                command.Parameters.Add(DbUtility.CreateParameter("p_account_identifier", OracleDbType.Varchar2, accountId));
-                var cursor = command.Parameters.Add(DbUtility.CreateParameter("po_return_cursor", OracleDbType.RefCursor, null, ParameterDirection.Output));
+                    command = new OracleCommand
+                    {
+                        CommandType = CommandType.StoredProcedure,
+                        CommandText = "accounts_api.get_account_details",
+                        Connection = connection,
+                        BindByName = true
+                    };
+                    command.Parameters.Add(DbUtility.CreateParameter("p_account_identifier", OracleDbType.Varchar2, accountId));
+                    var cursor = command.Parameters.Add(DbUtility.CreateParameter("po_return_cursor", OracleDbType.RefCursor, null, ParameterDirection.Output));
 
-                command.ExecuteNonQuery();
+                    command.ExecuteNonQuery();
 
-                reader = ((OracleRefCursor)cursor.Value).GetDataReader();
-                while (reader.Read())
-                {
-                    PrintAccountDetailFromReader(reader);
+                    reader = ((OracleRefCursor)cursor.Value).GetDataReader();
+                    while (reader.Read())
+                    {
+                        PrintAccountDetailFromReader(reader);
+                    }
                 }
-            }
-            finally
-            {
-                if (reader != null)
+                finally
                 {
-                    if (!reader.IsClosed) reader.Close();
-                    reader.Dispose();
+                    if (reader != null)
+                    {
+                        if (!reader.IsClosed) reader.Close();
+                        reader.Dispose();
+                    }
+                    if (command != null)
+                        command.Dispose();
+                    if (connection != null && connection.State == ConnectionState.Open)
+                        connection.Close();
                 }
-                if (command != null) command.Dispose();
             }
         }
 
