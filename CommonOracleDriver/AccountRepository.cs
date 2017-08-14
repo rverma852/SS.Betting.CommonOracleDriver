@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Oracle.DataAccess.Client;
+using Oracle.DataAccess.Types;
+using System;
+using System.Configuration;
+using System.Data;
 
 namespace CommonOracleDriver
 {
@@ -10,16 +10,18 @@ namespace CommonOracleDriver
     {
         public void PrintAccountDetails(string accountId)
         {
+            OracleConnection connection = null;
             OracleCommand command = null;
             OracleDataReader reader = null;
 
             try
             {
+                connection = new OracleConnection(ConfigurationManager.AppSettings["OracleConnectionString"]);
                 command = new OracleCommand
                 {
                     CommandType = CommandType.StoredProcedure,
-                    CommandText = ACCOUNT_GET_DETAILS,
-                    Connection = (OracleConnection)_dbContext.Connection,
+                    CommandText = "accounts_api.get_account_details",
+                    Connection = connection,
                     BindByName = true
 
                 };
@@ -29,11 +31,9 @@ namespace CommonOracleDriver
                 command.ExecuteNonQuery();
 
                 reader = ((OracleRefCursor)cursor.Value).GetDataReader();
-
                 while (reader.Read())
                 {
-                    account = new AccountDetailResponse();
-                    ExtractAccountDetailFromReader(reader, account);
+                    PrintAccountDetailFromReader(reader);
                 }
             }
             finally
@@ -45,6 +45,18 @@ namespace CommonOracleDriver
                 }
                 if (command != null) command.Dispose();
             }
+        }
+
+        private void PrintAccountDetailFromReader(OracleDataReader reader)
+        {
+            var accountId = DbUtility.TryParse<int>(reader["accounts_id"], int.TryParse);
+            Console.WriteLine($"AccountId = {accountId}");
+
+            var accountNumber = reader["account_number"].ToString();
+            Console.WriteLine($"AccountNumber = {accountNumber}");
+
+            var version = DbUtility.TryParse<int>(reader["version_number"], int.TryParse);
+            Console.WriteLine($"Version = {version}");
         }
     }
 }

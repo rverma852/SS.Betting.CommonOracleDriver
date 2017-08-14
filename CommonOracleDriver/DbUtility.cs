@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Oracle.DataAccess.Client;
+using System;
 using System.Data;
-using System.Linq;
-using Oracle.DataAccess.Client;
 
-namespace AccountService.DataAccess
+namespace CommonOracleDriver
 {
-
     public static class DbUtility
     {
         /// <summary>
@@ -122,15 +119,5 @@ namespace AccountService.DataAccess
         {
             return (TDest)Convert.ChangeType(source, typeof(TDest));
         }
-
-        public static Tag FindTag(IEnumerable<Tag> tagCollection, string key)
-        {
-            var tag = tagCollection.SingleOrDefault(t => string.Equals(t.Key, key, StringComparison.InvariantCultureIgnoreCase)) ??
-                new Tag(key, string.Empty);
-
-            return tag;
-        }
-
-
     }
 }
